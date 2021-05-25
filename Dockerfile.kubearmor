@@ -11,6 +11,7 @@ COPY ./protobuf ./protobuf
 WORKDIR /usr/src/KubeArmor/KubeArmor
 
 RUN ./build/patch.sh
+RUN chmod +x /build/patch.sh
 RUN GOOS=linux GOARCH=amd64 go build -a -ldflags '-s -w' -o kubearmor main.go
 
 ### Make executable image
