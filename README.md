@@ -1,6 +1,6 @@
 # KubeArmor
 
-![KubeArmor Logo](.gitbook/assets/logo.png)
+![Alt Text](documentation/resources/logo.png)
 
 ## Introduction to KubeArmor
 
@@ -10,11 +10,11 @@ KubeArmor is a container-aware runtime security enforcement system that restrict
 
 KubeArmor operates with [Linux security modules \(LSMs\)](https://en.wikipedia.org/wiki/Linux_Security_Modules), meaning that it can work on top of any Linux platforms \(such as Alpine, Ubuntu, and Container-optimized OS from Google\) if Linux security modules \(e.g., [AppArmor](https://en.wikipedia.org/wiki/AppArmor), [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), or [KRSI](https://lwn.net/Articles/808048/)\) are enabled in the Linux Kernel. KubeArmor will use the appropriate LSMs to enforce the required policies.
 
-KubeArmor is designed for Kubernetes environments; thus, operators only need to define security policies and apply them to Kubernetes. Then, KubeArmor will automatically detect the changes in security policies from Kubernetes and enforce them to the corresponding containers without any human intervention.
+KubeArmor is designed for Kubernetes environments; thus, operators only need to define security policies and apply them into Kubernetes. Then, KubeArmor will automatically detect the changes in security policies from Kubernetes and enforce them to the corresponding containers without any human intervention.
 
 If there are any violations against security policies, KubeArmor immediately generates audit logs with container identities. If operators have any logging systems, it automatically sends audit logs to their systems as well.
 
-![KubeArmor High Level Design](.gitbook/assets/kubearmor_overview.png)
+![Alt text](documentation/resources/kubearmor_overview.png "KubeArmor High Level Design")
 
 ## Functionality Overview
 
@@ -32,9 +32,9 @@ To avoid this problem, KubeArmor maintains security policies separately, which m
 
 * Produce container-aware audit logs
 
-LSMs do not have any container-related information; thus, they generate audit logs only based on system metadata \(e.g., User ID, Group ID, and process ID\). Therefore, it is hard to figure out what containers cause policy violations.
+LSMs do not have any container-related information; thus, they generate audit logs only based on system metadata \(e.g., UID/GID, and process ID\). Therefore, it is hard to figure out what containers cause policy violations.
 
-To address this problem, KubeArmor uses an eBPF-based system monitor, which keeps track of process life cycles in containers, and converts system metadata to container identities when LSMs generate audit logs for any policy violations from containers.
+To address this problem, KubeArmor uses an eBPF-based container monitor, which keeps track of process life cycles in containers, and converts system metadata to container identities when LSMs generate audit logs for any policy violations from containers.
 
 * Provide easy-to-use semantics for policy definitions
 
@@ -42,32 +42,29 @@ KubeArmor provides the ability to monitor the life cycles of containers' process
 
 * Support network security enforcement among containers
 
-KubeArmor aims to protect containers themselves rather than interactions among containers. However, using KubeArmor a user can add policies that could apply policy settings at the level of network system calls \(e.g., bind\(\), listen\(\), accept\(\), and connect\(\)\), thus somewhat controlling interactions among containers.
+KubeArmor aims to protect containers themselves rather than interactions among containers. However, using KubeArmor a user can add policies which could apply policy settings at the level of network system calls \(e.g., bind\(\), listen\(\), accept\(\), and connect\(\)\), thus somewhat controlling interactions among containers.
 
 ## Getting Started
 
 Please take a look at the following documents.
 
-1. [Deployment Guide](getting-started/deployment_guide.md)
-2. [Security Policy Specification for Containers](getting-started/security_policy_specification.md)
-3. [Security Policy Examples for Containers](getting-started/security_policy_examples.md)
-4. [Security Policy Specification for Nodes (Hosts)](getting-started/host_security_policy_specification.md)
-5. [Security Policy Examples for Nodes (Hosts)](getting-started/host_security_policy_examples.md)
+1. [Deployment Guide](documentation/getting-started/deployment_guide.md)
+2. [Security Policy Specification](documentation/getting-started/security_policy_specification.md)
+3. [Security Policy Examples](documentation/getting-started/security_policy_examples.md)
 
 If you want to make a contribution, please refer to the following documents too.
 
-1. [Contribution Guide](contribution/contribution_guide.md)
-2. [Development Guide](contribution/development_guide.md)
-3. [Technical Roadmap](contribution/technical_roadmap.md)
+1. [Contribution Guide](documentation/contribution/contribution_guide.md)
+2. [Development Guide](documentation/contribution/development_guide.md)
+3. [Technical Roadmap](documentation/contribution/technical_roadmap.md)
 
 ## Community
 
 * Slack
 
-  Please join the [KubeArmor Slack channel](https://kubearmor.herokuapp.com) to communicate with KubeArmor developers and other users. We always welcome having a discussion about the problems that you face during the use of KubeArmor.
+  Please join [KubeArmor Slack channel](https://kubearmor.herokuapp.com) to communicate with KubeArmor developers and other users. We always welcome having a discussion about the problems that you face during the use of KubeArmor.
 
 ## License
 
 KubeArmor is licensed under the Apache License, Version 2.0.  
 The eBPF-based container monitor is licensed under the General Public License, Version 2.0.
-

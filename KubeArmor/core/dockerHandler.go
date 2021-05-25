@@ -105,6 +105,9 @@ func (dh *DockerHandler) GetContainerInfo(containerID string) (tp.Container, err
 	container.ContainerID = inspect.ID
 	container.ContainerName = strings.TrimLeft(inspect.Name, "/")
 
+	container.HostName = kl.GetHostName()
+	container.HostIP = kl.GetExternalIPAddr()
+
 	containerLabels := inspect.Config.Labels
 	if _, ok := containerLabels["io.kubernetes.pod.namespace"]; ok { // kubernetes
 		if val, ok := containerLabels["io.kubernetes.pod.namespace"]; ok {
@@ -193,6 +196,7 @@ func (dm *KubeArmorDaemon) UpdateDockerContainer(containerID, action string) {
 			return
 		}
 
+		// add container to containers map
 		dm.ContainersLock.Lock()
 		if _, ok := dm.Containers[containerID]; !ok {
 			dm.Containers[containerID] = container
@@ -214,13 +218,14 @@ func (dm *KubeArmorDaemon) UpdateDockerContainer(containerID, action string) {
 		// case 3: destroy
 
 		dm.ContainersLock.Lock()
-		if val, ok := dm.Containers[containerID]; !ok {
+		val, ok := dm.Containers[containerID]
+		if !ok {
 			dm.ContainersLock.Unlock()
 			return
-		} else {
-			container = val
-			delete(dm.Containers, containerID)
 		}
+
+		container = val
+		delete(dm.Containers, containerID)
 		dm.ContainersLock.Unlock()
 
 		if strings.HasPrefix(container.ContainerName, "k8s_POD") {

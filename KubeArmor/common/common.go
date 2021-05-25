@@ -12,8 +12,6 @@ import (
 	"time"
 
 	kg "github.com/accuknox/KubeArmor/KubeArmor/log"
-
-	"golang.org/x/sys/unix"
 )
 
 // ============ //
@@ -43,63 +41,6 @@ func ContainsElement(slice interface{}, element interface{}) bool {
 	return false
 }
 
-// ObjCommaCanBeExpanded Function
-func ObjCommaCanBeExpanded(objptr interface{}) bool {
-	ovptr := reflect.ValueOf(objptr)
-	if ovptr.Kind() != reflect.Ptr {
-		return false
-	}
-
-	ov := ovptr.Elem()
-	if ov.Kind() != reflect.Slice {
-		return false
-	}
-
-	if ov.Len() == 0 {
-		return false
-	}
-
-	ovelm := ov.Index(0)
-	if ovelm.Kind() != reflect.Struct {
-		return false
-	}
-
-	field0 := ovelm.Field(0)
-	if field0.Kind() != reflect.String {
-		return false
-	}
-
-	value := field0.Interface().(string)
-	if strings.Split(value, ",")[0] == value {
-		return false
-	}
-
-	return true
-}
-
-// ObjCommaExpand Function
-func ObjCommaExpand(v reflect.Value) []string {
-	return strings.Split(v.Field(0).Interface().(string), ",")
-}
-
-// ObjCommaExpandFirstDupOthers Function
-func ObjCommaExpandFirstDupOthers(objptr interface{}) {
-	if ObjCommaCanBeExpanded(objptr) {
-		old := reflect.ValueOf(objptr).Elem()
-		new := reflect.New(reflect.TypeOf(objptr).Elem()).Elem()
-
-		for i := 0; i < old.Len(); i++ {
-			for _, f := range ObjCommaExpand(old.Index(i)) {
-				field := strings.ReplaceAll(f, " ", "")
-				new.Set(reflect.Append(new, old.Index(i)))
-				new.Index(new.Len() - 1).Field(0).SetString(field)
-			}
-		}
-
-		reflect.ValueOf(objptr).Elem().Set(new)
-	}
-}
-
 // ========== //
 // == Time == //
 // ========== //
@@ -110,10 +51,10 @@ const (
 )
 
 // GetDateTimeNow Function
-func GetDateTimeNow() (int64, string) {
+func GetDateTimeNow() string {
 	utc := time.Now().UTC()
 	ret := utc.Format(TimeFormUTC)
-	return utc.Unix(), ret
+	return ret
 }
 
 // GetUptimeTimestamp Function
@@ -182,30 +123,17 @@ func GetCommandOutputWithoutErr(cmd string, args []string) string {
 	return string(out)
 }
 
-// GetCommandWaitOutputWithErr Function
-func GetCommandWaitOutputWithErr(cmd string, args []string) error {
-	command := exec.Command(cmd, args...)
-	if err := command.Start(); err != nil {
-		return err
-	}
-
-	if err := command.Wait(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // ========== //
 // == Host == //
 // ========== //
 
 // GetHostName Function
 func GetHostName() string {
-	if res, err := os.Hostname(); err == nil {
-		return res
+	res, err := GetCommandOutputWithErr("cat", []string{"/etc/hostname"})
+	if err != nil {
+		return ""
 	}
-	return ""
+	return strings.Replace(res, "\n", "", -1)
 }
 
 // ================= //
@@ -214,28 +142,14 @@ func GetHostName() string {
 
 // StrToFile Function
 func StrToFile(str, destFile string) {
-	// if destFile doesn't exist, create it
-	if _, err := os.Stat(destFile); err != nil {
-		newFile, err := os.Create(destFile)
-		if err != nil {
-			kg.Err(err.Error())
-			return
-		}
-		newFile.Close()
-	}
-
-	// open the file with the append mode
 	file, err := os.OpenFile(destFile, os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		kg.Err(err.Error())
-		return
 	}
 	defer file.Close()
 
-	// add the newline at the end of the string
 	str = str + "\n"
 
-	// write the string into the file
 	_, err = file.WriteString(str)
 	if err != nil {
 		kg.Err(err.Error())
@@ -265,12 +179,12 @@ func GetIPAddr(ifname string) string {
 	if interfaces, err := net.Interfaces(); err == nil {
 		for _, iface := range interfaces {
 			if iface.Name == ifname {
-				if addrs, err := iface.Addrs(); err == nil {
-					ipaddr := strings.Split(addrs[0].String(), "/")[0]
-					return ipaddr
+				addrs, err := iface.Addrs()
+				if err != nil {
+					panic(err)
 				}
-
-				return ""
+				ipaddr := strings.Split(addrs[0].String(), "/")[0]
+				return ipaddr
 			}
 		}
 	}
@@ -331,7 +245,6 @@ func IsK8sEnv() bool {
 func MatchIdentities(identities []string, superIdentities []string) bool {
 	matched := true
 
-	// if nothing in identities, skip it
 	if len(identities) == 0 {
 		return false
 	}
@@ -346,55 +259,4 @@ func MatchIdentities(identities []string, superIdentities []string) bool {
 
 	// otherwise, return true
 	return matched
-}
-
-// ============= //
-// == SELinux == //
-// ============= //
-
-// DoLgetxattr is a wrapper that retries on EINTR
-func DoLgetxattr(path, attr string, dest []byte) (int, error) {
-	for { // TODO: NEED THE TERMINATION CONDITION FOR THE WORST CASE
-		if sz, err := unix.Lgetxattr(path, attr, dest); err != unix.EINTR {
-			return sz, err
-		}
-	}
-}
-
-// Lgetxattr returns a []byte slice containing the value of an extended attribute attr set for path.
-func Lgetxattr(path, attr string) ([]byte, error) {
-	dest := make([]byte, 128)
-
-	sz, errno := DoLgetxattr(path, attr, dest)
-	for errno == unix.ERANGE {
-		// if buffer is too small, use zero-sized buffer to get the actual size
-		sz, errno = DoLgetxattr(path, attr, []byte{})
-		if errno != nil {
-			return nil, errno
-		}
-
-		dest = make([]byte, sz)
-		sz, errno = DoLgetxattr(path, attr, dest)
-	}
-	if errno != nil {
-		return nil, errno
-	}
-
-	return dest[:sz], nil
-}
-
-func GetSELinuxType(path string) (string, error) {
-	xattrNameSelinux := "security.selinux"
-
-	label, err := Lgetxattr(path, xattrNameSelinux)
-	if err != nil {
-		return "", err
-	}
-
-	// Trim the NUL byte at the end of the byte buffer, if present.
-	if len(label) > 0 && label[len(label)-1] == '\x00' {
-		label = label[:len(label)-1]
-	}
-
-	return strings.Split(string(label), ":")[2], nil
 }

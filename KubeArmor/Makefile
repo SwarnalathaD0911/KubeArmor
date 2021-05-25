@@ -9,12 +9,7 @@ build:
 .PHONY: run
 run: $(CURDIR)/kubearmor
 	cd $(CURDIR); sudo rm -f /tmp/kubearmor.log
-	cd $(CURDIR); sudo -E ./kubearmor -logPath=/tmp/kubearmor.log
-
-.PHONY: run-per-pod
-run-per-pod: $(CURDIR)/kubearmor
-	cd $(CURDIR); sudo rm -f /tmp/kubearmor.log
-	cd $(CURDIR); sudo -E ./kubearmor -logPath=/tmp/kubearmor.log -enableEnforcerPerPod
+	cd $(CURDIR); sudo -E ./kubearmor -output=/tmp/kubearmor.log
 
 .PHONY: test
 test:
@@ -31,3 +26,7 @@ clean:
 	cd $(CURDIR); sudo rm -f kubearmor /tmp/kubearmor.log
 	cd $(CURDIR); find . -name go.sum | xargs -I {} rm -f {}
 	$(CURDIR)/build/clean_source_files.sh
+
+.PHONY: image
+image:
+	cd $(CURDIR)/build; $(MAKE)

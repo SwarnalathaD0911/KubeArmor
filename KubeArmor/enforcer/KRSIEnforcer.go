@@ -33,8 +33,3 @@ func (ke *KRSIEnforcer) DestroyKRSIEnforcer() error {
 func (ke *KRSIEnforcer) UpdateSecurityPolicies(conGroup tp.ContainerGroup) {
 	//
 }
-
-// UpdateHostSecurityPolicies Function
-func (ke *KRSIEnforcer) UpdateHostSecurityPolicies(secPolicies []tp.HostSecurityPolicy) {
-	//
-}

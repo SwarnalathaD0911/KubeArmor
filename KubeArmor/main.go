@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 	"path/filepath"
 
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 
@@ -14,8 +14,6 @@ import (
 )
 
 func main() {
-	// == //
-
 	if os.Geteuid() != 0 {
 		kg.Printf("Need to have root privileges to run %s\n", os.Args[0])
 		return
@@ -34,19 +32,9 @@ func main() {
 
 	// == //
 
-	// options (string)
-	clusterPtr := flag.String("cluster", "Default", "cluster name")
-	gRPCPtr := flag.String("gRPC", "32767", "gRPC port number")
-	logPathPtr := flag.String("logPath", "none", "log file path")
-
-	// options (boolean)
-	enableAuditdPtr := flag.Bool("enableAuditd", false, "enabling Auditd")
-	enableHostPolicyPtr := flag.Bool("enableHostPolicy", false, "enabling host policies")
-	enableEnforcerPerPodPtr := flag.Bool("enableEnforcerPerPod", false, "enabling the enforcer per pod")
-
-	// profile option
+	portPtr := flag.String("port", "32767", "gRPC port number")
+	outputPtr := flag.String("output", "none", "log file path")
 	pprofPtr := flag.String("pprof", "none", "pprof port number")
-
 	flag.Parse()
 
 	if *pprofPtr != "none" {
@@ -57,7 +45,5 @@ func main() {
 
 	// == //
 
-	core.KubeArmor(*clusterPtr, *gRPCPtr, *logPathPtr, *enableAuditdPtr, *enableHostPolicyPtr, *enableEnforcerPerPodPtr)
-
-	// == //
+	core.KubeArmor(*portPtr, *outputPtr)
 }
