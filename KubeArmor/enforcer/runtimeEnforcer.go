@@ -26,7 +26,7 @@ type RuntimeEnforcer struct {
 }
 
 // NewRuntimeEnforcer Function
-func NewRuntimeEnforcer(feeder *fd.Feeder, enableAuditd, enableHostPolicy bool) *RuntimeEnforcer {
+func NewRuntimeEnforcer(feeder *fd.Feeder) *RuntimeEnforcer {
 	re := &RuntimeEnforcer{}
 
 	re.LogFeeder = feeder
@@ -39,7 +39,6 @@ func NewRuntimeEnforcer(feeder *fd.Feeder, enableAuditd, enableHostPolicy bool) 
 	lsm, err := ioutil.ReadFile("/sys/kernel/security/lsm")
 	if err != nil {
 		re.LogFeeder.Errf("Failed to read /sys/kernel/security/lsm (%s)", err.Error())
-		return nil
 	}
 
 	re.enableLSM = false
@@ -54,7 +53,7 @@ func NewRuntimeEnforcer(feeder *fd.Feeder, enableAuditd, enableHostPolicy bool) 
 	}
 
 	if strings.Contains(re.enforcerType, "apparmor") {
-		re.appArmorEnforcer = NewAppArmorEnforcer(feeder, enableAuditd, enableHostPolicy)
+		re.appArmorEnforcer = NewAppArmorEnforcer(feeder)
 		if re.appArmorEnforcer != nil {
 			re.LogFeeder.Print("Initialized AppArmor Enforcer")
 			re.enableLSM = true
@@ -77,7 +76,7 @@ func NewRuntimeEnforcer(feeder *fd.Feeder, enableAuditd, enableHostPolicy bool) 
 }
 
 // UpdateSecurityProfiles Function
-func (re *RuntimeEnforcer) UpdateSecurityProfiles(action string, pod tp.K8sPod, full bool) {
+func (re *RuntimeEnforcer) UpdateSecurityProfiles(action string, pod tp.K8sPod) {
 	if strings.Contains(re.enforcerType, "apparmor") {
 		appArmorProfiles := []string{}
 
@@ -92,20 +91,9 @@ func (re *RuntimeEnforcer) UpdateSecurityProfiles(action string, pod tp.K8sPod, 
 
 		for _, profile := range appArmorProfiles {
 			if action == "ADDED" {
-				re.appArmorEnforcer.RegisterAppArmorProfile(profile, full)
+				re.appArmorEnforcer.RegisterAppArmorProfile(profile)
 			} else if action == "DELETED" {
-				re.appArmorEnforcer.UnregisterAppArmorProfile(profile, full)
-			}
-		}
-	} else if strings.Contains(re.enforcerType, "selinux") {
-		for k, selinuxProfile := range pod.Metadata {
-			if strings.HasPrefix(k, "selinux-") { // selinux- + [container_name]
-				containerName := strings.Split(k, "selinux-")[1]
-				if action == "ADDED" {
-					re.seLinuxEnforcer.RegisterSELinuxProfile(pod, containerName, selinuxProfile)
-				} else if action == "DELETED" {
-					re.seLinuxEnforcer.UnregisterSELinuxProfile(pod, selinuxProfile)
-				}
+				re.appArmorEnforcer.UnregisterAppArmorProfile(profile)
 			}
 		}
 	}
@@ -123,21 +111,6 @@ func (re *RuntimeEnforcer) UpdateSecurityPolicies(conGroup tp.ContainerGroup) {
 
 	if strings.Contains(re.enforcerType, "selinux") {
 		re.seLinuxEnforcer.UpdateSecurityPolicies(conGroup)
-	}
-}
-
-// UpdateHostSecurityPolicies Function
-func (re *RuntimeEnforcer) UpdateHostSecurityPolicies(secPolicies []tp.HostSecurityPolicy) {
-	if strings.Contains(re.enforcerType, "krsi") {
-		re.krsiEnforcer.UpdateHostSecurityPolicies(secPolicies)
-	}
-
-	if strings.Contains(re.enforcerType, "apparmor") {
-		re.appArmorEnforcer.UpdateHostSecurityPolicies(secPolicies)
-	}
-
-	if strings.Contains(re.enforcerType, "selinux") {
-		re.seLinuxEnforcer.UpdateHostSecurityPolicies(secPolicies)
 	}
 }
 
@@ -198,21 +171,4 @@ func (re *RuntimeEnforcer) DestroyRuntimeEnforcer() error {
 	}
 
 	return nil
-}
-
-// GetEnforcerType Function
-func (re *RuntimeEnforcer) GetEnforcerType() string {
-	if strings.Contains(re.enforcerType, "krsi") {
-		return "krsi"
-	}
-
-	if strings.Contains(re.enforcerType, "apparmor") {
-		return "apparmor"
-	}
-
-	if strings.Contains(re.enforcerType, "selinux") {
-		return "selinux"
-	}
-
-	return "None"
 }

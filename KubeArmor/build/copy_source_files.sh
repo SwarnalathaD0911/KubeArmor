@@ -5,7 +5,6 @@ ARMOR_HOME=`dirname $(realpath "$0")`/..
 # copy files to build
 mkdir -p $ARMOR_HOME/build/KubeArmor
 cp -r $ARMOR_HOME/BPF/ $ARMOR_HOME/build/KubeArmor/
-cp -r $ARMOR_HOME/audit/ $ARMOR_HOME/build/KubeArmor/
 cp -r $ARMOR_HOME/common/ $ARMOR_HOME/build/KubeArmor/
 cp -r $ARMOR_HOME/core/ $ARMOR_HOME/build/KubeArmor/
 cp -r $ARMOR_HOME/discovery/ $ARMOR_HOME/build/KubeArmor/
@@ -25,8 +24,3 @@ cp -r $ARMOR_HOME/../GKE $ARMOR_HOME/build/
 
 # copy protobuf
 cp -r $ARMOR_HOME/../protobuf $ARMOR_HOME/build/
-
-# copy clients
-cp -r $ARMOR_HOME/../LogClient $ARMOR_HOME/build/
-cp -r $ARMOR_HOME/../MySQLClient $ARMOR_HOME/build/
-cp -r $ARMOR_HOME/../KafkaClient $ARMOR_HOME/build/

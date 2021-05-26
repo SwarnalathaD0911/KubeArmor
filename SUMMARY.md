@@ -2,32 +2,29 @@
 
 * [KubeArmor](README.md)
 
-## Getting Started
+## Documentation
 
-* [Deployment Guide](getting-started/deployment_guide.md)
-* [Security Policy Specification for Containers](getting-started/security_policy_specification.md)
-* [Security Policy Examples for Containers](getting-started/security_policy_examples.md)
-* [Security Policy Specification for Nodes (Hosts)](getting-started/host_security_policy_specification.md)
-* [Security Policy Examples for Nodes (Hosts)](getting-started/host_security_policy_examples.md)
-* [Consideration in Policy Action](getting-started/consideration_in_policy_action.md)
+### Getting Started
 
-## Contribution
+* [Deployment Guide](documentation/getting-started/deployment_guide.md)
+* [Security Policy Specification](documentation/getting-started/security_policy_specification.md)
+* [Security Policy Examples](documentation/getting-started/security_policy_examples.md)
+* [Consideration in Policy Action](documentation/getting-started/consideration_in_policy_action.md)
 
-* [Contribution Guide](contribution/contribution_guide.md)
-* [Development Guide](contribution/development_guide.md)
-* [Kubernetes Installation for Ubuntu](contribution/k8s_installation_guide_ubuntu.md)
-* [Kubernetes Installation for Fedora](contribution/k8s_installation_guide_fedora.md)
-* [Testing Guide](contribution/testing_guide.md)
-* [Troubleshooting Guide](contribution/trouble_shooting_guide.md)
-* [Technical Roadmap](contribution/technical_roadmap.md)
+### Contribution
 
-## Reference
+* [Contribution Guide](documentation/contribution/contribution_guide.md)
+* [Development Guide](documentation/contribution/development_guide.md)
+* [Kubernetes Installation](documentation/contribution/k8s_installation_guide.md)
+* [Technical Roadmap](documentation/contribution/technical_roadmap.md)
 
-* [Supported Capability List](reference/supported_capability_list.md)
+### Reference
+
+* [Supported Capability List](documentation/reference/supported_capability_list.md)
+* [Supported Operation List](documentation/reference/supported_operation_list.md)
 
 ## Examples
 
 * [Multiubuntu](examples/multiubuntu.md)
 * [Sock-Shop](examples/sock-shop.md)
 * [Wordpress-MySQL](examples/wordpress-mysql.md)
-

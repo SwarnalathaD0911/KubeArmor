@@ -1,11 +1,10 @@
 module github.com/accuknox/KubeArmor/KubeArmor
 
-go 1.15
+go 1.14
 
 replace (
 	github.com/accuknox/KubeArmor => ../../
 	github.com/accuknox/KubeArmor/KubeArmor => ../
-	github.com/accuknox/KubeArmor/KubeArmor/audit => ./audit
 	github.com/accuknox/KubeArmor/KubeArmor/common => ./common
 	github.com/accuknox/KubeArmor/KubeArmor/core => ./core
 	github.com/accuknox/KubeArmor/KubeArmor/discover => ./discovery
@@ -19,7 +18,6 @@ replace (
 
 require (
 	github.com/Microsoft/go-winio v0.4.16 // indirect
-	github.com/accuknox/KubeArmor/KubeArmor/audit v0.0.0-00010101000000-000000000000 // indirect
 	github.com/accuknox/KubeArmor/KubeArmor/core v0.0.0-00010101000000-000000000000
 	github.com/accuknox/KubeArmor/KubeArmor/log v0.0.0-00010101000000-000000000000
 	github.com/containerd/containerd v1.4.3
@@ -30,13 +28,12 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/go-logr/logr v0.3.0 // indirect
-	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
-	github.com/iovisor/gobpf v0.2.0
+	github.com/iovisor/gobpf v0.0.0-20210217075126-686d1e527d5f
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect

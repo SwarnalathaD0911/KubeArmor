@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -216,97 +215,34 @@ func (kh *K8sHandler) GetContainerRuntime() string {
 	return node.Status.NodeInfo.ContainerRuntimeVersion
 }
 
-// GetNodeIdentities Function
-func (kh *K8sHandler) GetNodeIdentities() []string {
-	nodeIdentities := []string{}
-
-	if !kl.IsK8sEnv() { // not Kubernetes
-		return nodeIdentities
-	}
-
-	// get a host name
-	hostName := kl.GetHostName()
-
-	// add the host name
-	nodeIdentities = append(nodeIdentities, "hostName="+hostName)
-
-	// get a node from k8s api client
-	node, err := kh.K8sClient.CoreV1().Nodes().Get(context.Background(), hostName, metav1.GetOptions{})
-	if err != nil {
-		return nodeIdentities
-	}
-
-	// add more info
-	nodeIdentities = append(nodeIdentities, "architecture="+node.Status.NodeInfo.Architecture)
-	nodeIdentities = append(nodeIdentities, "osType="+node.Status.NodeInfo.OperatingSystem)
-	nodeIdentities = append(nodeIdentities, "osName="+strings.Split(node.Status.NodeInfo.OSImage, " ")[0])
-	nodeIdentities = append(nodeIdentities, "osVersion="+strings.Split(node.Status.NodeInfo.OSImage, " ")[1])
-	nodeIdentities = append(nodeIdentities, "kernelVersion="+strings.Split(node.Status.NodeInfo.KernelVersion, "-")[0])
-	nodeIdentities = append(nodeIdentities, "runtimePlatform="+strings.Split(node.Status.NodeInfo.ContainerRuntimeVersion, ":")[0])
-
-	// add labels
-	for k, v := range node.ObjectMeta.Labels {
-		nodeIdentities = append(nodeIdentities, k+"="+v)
-	}
-
-	return nodeIdentities
-}
-
 // ================ //
 // == Deployment == //
 // ================ //
 
 // PatchDeploymentWithAppArmorAnnotations Function
-func (kh *K8sHandler) PatchDeploymentWithAppArmorAnnotations(namespaceName, deploymentName string, appArmorAnnotations map[string]string) error {
+func (kh *K8sHandler) PatchDeploymentWithAppArmorAnnotations(namespaceName, deploymentName string, annotations map[string]string) error {
 	if !kl.IsK8sEnv() { // not Kubernetes
 		return nil
 	}
 
-	spec := `{"spec":{"template":{"metadata":{"annotations":{"kubearmor-policy":"enabled",`
-	count := len(appArmorAnnotations)
+	spec := `{"spec":{"template":{"metadata":{"annotations":{`
 
-	for k, v := range appArmorAnnotations {
-		spec = spec + `"container.apparmor.security.beta.kubernetes.io/` + k + `":"localhost/` + v + `"`
+	count := len(annotations)
+
+	for k, v := range annotations {
+		kv := `"container.apparmor.security.beta.kubernetes.io/` + k + `":"localhost/` + v + `"`
 
 		if count > 1 {
-			spec = spec + ","
+			kv = kv + ","
 		}
-
 		count--
+
+		spec = spec + kv
 	}
 
 	spec = spec + `}}}}}`
 
 	_, err := kh.K8sClient.AppsV1().Deployments(namespaceName).Patch(context.Background(), deploymentName, types.StrategicMergePatchType, []byte(spec), metav1.PatchOptions{})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// PatchDeploymentWithSELinuxOptions Function
-func (kh *K8sHandler) PatchDeploymentWithSELinuxOptions(namespace, deploymentName string, seLinuxContexts map[string]string) error {
-	if !kl.IsK8sEnv() { // not Kubernetes
-		return nil
-	}
-
-	spec := `{"spec":{"template":{"metadata":{"annotations":{"kubearmor-policy":"enabled"}},"spec":{"containers":[`
-	count := len(seLinuxContexts)
-
-	for _, v := range seLinuxContexts {
-		spec = spec + v
-
-		if count > 1 {
-			spec = spec + ","
-		}
-
-		count--
-	}
-
-	spec = spec + `]}}}}`
-
-	_, err := kh.K8sClient.AppsV1().Deployments(namespace).Patch(context.Background(), deploymentName, types.StrategicMergePatchType, []byte(spec), metav1.PatchOptions{})
 	if err != nil {
 		return err
 	}
@@ -438,28 +374,6 @@ func (kh *K8sHandler) CheckCustomResourceDefinition(resourceName string) bool {
 	return false
 }
 
-// ApplyCustomResourceDefinitions Function
-func (kh *K8sHandler) ApplyCustomResourceDefinitions() bool {
-	if !kl.IsK8sEnv() { // not Kubernetes
-		return false
-	}
-
-	//
-
-	return false
-}
-
-// DeleteCustomResourceDefinition Function
-func (kh *K8sHandler) DeleteCustomResourceDefinitions() bool {
-	if !kl.IsK8sEnv() { // not Kubernetes
-		return false
-	}
-
-	//
-
-	return false
-}
-
 // WatchK8sSecurityPolicies Function
 func (kh *K8sHandler) WatchK8sSecurityPolicies() *http.Response {
 	if !kl.IsK8sEnv() { // not Kubernetes
@@ -487,41 +401,6 @@ func (kh *K8sHandler) WatchK8sSecurityPolicies() *http.Response {
 
 	// kube-proxy (local)
 	URL := "http://" + kh.K8sHost + ":" + kh.K8sPort + "/apis/security.accuknox.com/v1/kubearmorpolicies?watch=true"
-
-	if resp, err := http.Get(URL); err == nil {
-		return resp
-	}
-
-	return nil
-}
-
-// WatchK8sHostSecurityPolicies Function
-func (kh *K8sHandler) WatchK8sHostSecurityPolicies() *http.Response {
-	if !kl.IsK8sEnv() { // not Kubernetes
-		return nil
-	}
-
-	if kl.IsInK8sCluster() {
-		URL := "https://" + kh.K8sHost + ":" + kh.K8sPort + "/apis/security.accuknox.com/v1/kubearmorhostpolicies?watch=true"
-
-		req, err := http.NewRequest("GET", URL, nil)
-		if err != nil {
-			return nil
-		}
-
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", kh.K8sToken))
-
-		resp, err := kh.WatchClient.Do(req)
-		if err != nil {
-			return nil
-		}
-
-		return resp
-	}
-
-	// kube-proxy (local)
-	URL := "http://" + kh.K8sHost + ":" + kh.K8sPort + "/apis/security.accuknox.com/v1/kubearmorhostpolicies?watch=true"
 
 	if resp, err := http.Get(URL); err == nil {
 		return resp

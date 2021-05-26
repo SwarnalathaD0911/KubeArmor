@@ -1,0 +1,20 @@
+apiVersion: security.accuknox.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: ksp-mysql-dir-audit
+  namespace: wordpress-mysql
+spec:
+  severity: 5
+  selector:
+    matchLabels:
+      app: mysql
+  file:
+    matchDirectories:
+    - dir: /var/lib/mysql/
+      recursive: true
+
+      # cd /var/lib/mysql
+      # touch test
+
+  action:
+    Audit
